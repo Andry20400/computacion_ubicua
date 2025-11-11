@@ -1,91 +1,84 @@
-#define CUSTOM_SETTINGS
-#define INCLUDE_GAMEPAD_MODULE
-#include <Dabble.h>
+#include <SoftwareSerial.h>
+#include "Dabble.h"
 
-//Right motor
-int enableRightMotor=5; 
-int rightMotorPin1=7;
-int rightMotorPin2=8;
+// Pines L298N
+#define ENA 5      // PWM motor izquierdo
+#define IN1 6      // Motor izquierdo IN1
+#define IN2 7      // Motor izquierdo IN2
+#define ENB 10     // PWM motor derecho
+#define IN3 8      // Motor derecho IN3
+#define IN4 9      // Motor derecho IN4
 
-//Left motor
-int enableLeftMotor=6;
-int leftMotorPin1=9;
-int leftMotorPin2=10;
+SoftwareSerial BT(2, 3); // RX, TX para HM-10
 
-void setup()
-{
-  // put your setup code here, to run once:
-  pinMode(enableRightMotor,OUTPUT);
-  pinMode(rightMotorPin1,OUTPUT);
-  pinMode(rightMotorPin2,OUTPUT);
-  
-  pinMode(enableLeftMotor,OUTPUT);
-  pinMode(leftMotorPin1,OUTPUT);
-  pinMode(leftMotorPin2,OUTPUT);
+void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
 
-  rotateMotor(0,0);   
-    
-  Dabble.begin(9600, 2, 3);
+  BT.begin(9600);
+  Dabble.begin(BT);
 }
 
-
-
-void loop()
-{
-  int rightMotorSpeed=0;
-  int leftMotorSpeed=0;
+void loop() {
   Dabble.processInput();
-  if (GamePad.isUpPressed())
-  {
-    rightMotorSpeed = 255;
-    leftMotorSpeed = 255;
-  }
 
-  if (GamePad.isDownPressed())
-  {
-    rightMotorSpeed = -255;
-    leftMotorSpeed = -255;
-  }
-
-  if (GamePad.isLeftPressed())
-  {
-    rightMotorSpeed = 255;
-    leftMotorSpeed = 0;
-  }
-
-  if (GamePad.isRightPressed())
-  {
-    rightMotorSpeed = 0;
-    leftMotorSpeed = 255;
-  }
-
-  rotateMotor(rightMotorSpeed, leftMotorSpeed);
+  if (GamePad.isUpPressed()) adelante();
+  else if (GamePad.isDownPressed()) atras();
+  else if (GamePad.isLeftPressed()) izquierda();
+  else if (GamePad.isRightPressed()) derecha();
+  else detener();
 }
 
-void rotateMotor(int rightMotorSpeed, int leftMotorSpeed)
-{
-  if (rightMotorSpeed < 0)
-  {
-    digitalWrite(rightMotorPin1,LOW);
-    digitalWrite(rightMotorPin2,HIGH);    
-  }
-  else if (rightMotorSpeed >= 0)
-  {
-    digitalWrite(rightMotorPin1,HIGH);
-    digitalWrite(rightMotorPin2,LOW);      
-  }
+void adelante() {
+  // Motor izquierdo normal
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  // Motor derecho INVERTIDO (corrección)
+  digitalWrite(IN3, LOW);  // Invertido
+  digitalWrite(IN4, HIGH); // Invertido
+  analogWrite(ENA, 200);   // Ajusta velocidad si es necesario
+  analogWrite(ENB, 200);
+}
 
-  if (leftMotorSpeed < 0)
-  {
-    digitalWrite(leftMotorPin1,LOW);
-    digitalWrite(leftMotorPin2,HIGH);    
-  }
-  else if (leftMotorSpeed >= 0)
-  {
-    digitalWrite(leftMotorPin1,HIGH);
-    digitalWrite(leftMotorPin2,LOW);      
-  }
+void atras() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  // Motor derecho INVERTIDO
+  digitalWrite(IN3, HIGH); // Invertido
+  digitalWrite(IN4, LOW);  // Invertido
+  analogWrite(ENA, 200);
+  analogWrite(ENB, 200);
+}
 
-  analogWrite(enableRightMotor, abs(rightMotorSpeed));
-  analogWrite(enableLeftMotor, abs(leftMotorSpeed));    
+void izquierda() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  // Motor derecho INVERTIDO
+  digitalWrite(IN3, LOW);  // Invertido
+  digitalWrite(IN4, HIGH); // Invertido
+  analogWrite(ENA, 150);
+  analogWrite(ENB, 150);
+}
+
+void derecha() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  // Motor derecho INVERTIDO
+  digitalWrite(IN3, HIGH); // Invertido
+  digitalWrite(IN4, LOW);  // Invertido
+  analogWrite(ENA, 150);
+  analogWrite(ENB, 150);
+}
+
+void detener() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
 }
